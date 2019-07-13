@@ -1,0 +1,111 @@
+---
+title: "Unit 1 - Lab 1"
+author: "Hye Young Park"
+date: "July 11, 2019"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+
+# Heatmap
+
+```{r}
+nba <- read.csv("http://datasets.flowingdata.com/ppg2008.csv", sep=",")
+nba <- nba[order(nba$PTS),]
+row.names(nba) <- nba$Name
+nba <- nba[,2:20]
+nba_matrix <- data.matrix(nba)
+nba_heatmap <- heatmap(nba_matrix, Rowv=NA, Colv=NA, col = cm.colors(256), scale="column", margins=c(5,10))
+```
+
+# Treemap
+
+```{r}
+data <- read.csv("http://datasets.flowingdata.com/post-data.txt")
+```
+
+```{r}
+#install.packages("portfolio")
+library(portfolio)
+```
+
+```{r}
+map.market(id=data$id, area=data$views, group=data$category, color=data$comments, main="FlowingData Map")
+```
+
+# Streamgraph
+
+```{r}
+library(dplyr)
+library(babynames)
+library(streamgraph)
+
+babynames %>%
+  filter(grepl("^Kr", name)) %>%
+  group_by(year, name) %>%
+  tally(wt=n) %>%
+  streamgraph("name", "n", "year")
+```
+
+
+```{r}
+library(dplyr)
+library(babynames)
+library(streamgraph)
+
+babynames %>%
+  filter(grepl("^I", name)) %>%
+  group_by(year, name) %>%
+  tally(wt=n) %>%
+  streamgraph("name", "n", "year", offset="zero", interpolate="linear") %>%
+  sg_legend(show=TRUE, label="I- names: ")
+```
+
+```{r}
+dat <- read.csv("http://asbcllc.com/blog/2015/february/cre_stream_graph_test/data/cre_transaction-data.csv")
+
+dat %>%
+  streamgraph("asset_class", "volume_billions", "year", interpolate="cardinal") %>%
+  sg_axis_x(1, "year", "%Y") %>%
+  sg_fill_brewer("PuOr")
+```
+
+```{r}
+dat %>%
+  streamgraph("asset_class", "volume_billions", "year", offset="silhouette", interpolate="step") %>%
+  sg_axis_x(1, "year", "%Y") %>%
+  sg_fill_brewer("PuOr")
+```
+
+```{r}
+dat %>%
+  streamgraph("asset_class", "volume_billions", "year", offset="zero", interpolate="cardinal") %>%
+  sg_axis_x(1, "year", "%Y") %>%
+  sg_fill_brewer("PuOr") %>%
+  sg_legend(TRUE, "Asset class: ")
+```
+
+```{r}
+dat %>%
+  streamgraph("asset_class", "volume_billions", "year", offset="zero", interpolate="step") %>%
+  sg_axis_x(1, "year", "%Y") %>%
+  sg_fill_brewer("PuOr")
+```
+
+## This dataset - movies is no longer in ggplot2
+## reference:https://github.com/ropensci/plotly/issues/400
+
+### ggplot2::movies %>%
+###  select(year, Action, Animation, Comedy, Drama, Documentary, Romance, Short) %>%
+###  tidyr::gather(genre, value, -year) %>%
+###  group_by(year, genre) %>%
+###  tally(wt=value) %>%
+###  ungroup %>%
+###  streamgraph("genre", "n", "year") %>%
+###  sg_axis_x(20) %>%
+###  sg_fill_brewer("PuOr") %>%
+###  sg_legend(show=TRUE, label="Genres: ")
+
