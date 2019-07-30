@@ -1,0 +1,164 @@
+---
+title: "Data 110 - Project 1: Technology Price Index 2016"
+author: "Hye Young Park"
+date: "7/25/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##### source: https://www.kaggle.com/ikalats/TechnologyPriceIndex#TechnologyIndex.csv
+```{r}
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tidyverse)
+library(readr)
+library(scales)
+library(portfolio)
+library(rnaturalearth)
+library(rgeos)
+library(gapminder)
+library(RColorBrewer)
+```
+
+```{r}
+technology1 <- read_csv(file = "TechnologyIndex.csv")
+```
+
+
+##### Remove row 72 - Venezuela - due to confusion with a huge gap between amounts. These amounts are due to an economical crisis in Venezuela and we are taking it out since it is an outlier.
+```{r}
+str(technology1)
+head(technology1, 3)
+tail(technology1, 4)
+technology1[72, ]
+technology <- technology1[-72, ]
+tail(technology, 4)
+```
+
+
+
+#### Bar Plot
+##### We only want to focus on the first fifteen rows of our data, the cheapest fifteen countries. We're also showing no ranking and only the iPhone price to see a trend of one product
+```{r}
+firstFifteen <- filter(
+  technology,
+  technology$Rank <= 15
+  )
+technologystack <- table(
+  firstFifteen$country,
+  firstFifteen$iPhone
+  )
+ggplot(
+  firstFifteen,
+  aes(fill=country,
+      y=iPhone,
+      x=country)
+  ) +
+  ylab("iPhone Price") +
+  ggtitle("Lowest Technology Price in 2016: First 15 Countries",
+          subtitle = "Device: iPhone") +
+  ylab("Price") +
+  geom_bar(position="dodge",
+           stat="identity"
+           ) +
+  theme(axis.text.x = element_text(angle=50, hjust = 0.9))
+```
+
+
+
+#### Bubble Chart
+##### We wanted to show 3 variables at the same time here, country, rank, and price and this bubble chart was a way to do so. It has a legend showing rank (color of numbers and size of bubbles)
+```{r}
+techbubble <- firstFifteen
+techbubble$country <- as.factor(techbubble$country)
+head(firstFifteen[, "Samsungtablet"], 4)
+ggplot(firstFifteen,
+       aes(x = country,
+           y = Samsungtablet,
+           label = Rank,
+           color = Rank)
+       ) +
+  xlab("Country") +
+  ylab("Price") +
+  geom_point(
+    aes(size = Rank),
+    color="orange",
+    ) +
+  geom_text(
+    aes(x = country,
+        y = Samsungtablet,
+        label = Rank,
+        color = Rank),
+        size=4
+        ) +
+  ggtitle("Lowest Technology Price 2016: First 15 Countries",
+          subtitle = "Device: Samsung Tablet"
+          ) +
+  scale_size(range = c(0.5, 10)) +
+  theme_bw() + 
+  theme(legend.position = "right") +
+  theme(plot.background = element_rect(fill = "lightgreen")) +
+  theme(axis.text.x = element_text(angle=90, hjust=0.95, vjust=0.5)
+        )
+```
+
+
+
+#### 3D Map with Plotly
+##### This one was very fun to do. We had to figure out a way to get the location code for all the countries in our data set since the original data set didn't come with them. Also we had to change some country names from the original data set's names so it matches the (country_codes) table in R. That is how we got the country codes, using that table and matching on the country name in our data.
+
+```{r}
+l <- list(
+  color = toRGB("#d1d1d1"),
+  width = 0.5
+  )
+tworld <- list(
+  showframe = FALSE,
+  showcoastlines = FALSE,
+  projection = list(type = 'orthographic'),
+  resolution = '100',
+  showcountries = TRUE,
+  countrycolor = '#d1d1d1',
+  showocean = TRUE,
+  oceancolor = '#c9d2e0',
+  showlakes = TRUE,
+  lakecolor = '#99c0db',
+  showrivers = TRUE,
+  rivercolor = '#99c0db'
+  )
+newtable <- merge(
+  technology,
+  country_codes,
+  by  = "country"
+  )
+tworld1 <- plot_geo(newtable) %>% 
+   add_trace(
+     newtable, 
+     z = ~Rank, 
+     color = ~Rank, 
+     colors = 'Reds', 
+     text = ~paste(
+       paste("Rank: ", newtable$Rank), 
+       paste("Country: ", newtable$country), 
+       paste("Iphone price: ", newtable$iPhone), 
+       paste("MacBook price: ", newtable$MacBook), 
+       paste("SamsungTablet price: ", newtable$Samsungtablet),
+       sep = "<br />"),
+       locations = ~iso_alpha,
+       marker = list(size =  1),
+       hoverinfo = 'text')  %>%
+   colorbar(
+     title = 'Lowest Technology Price 2016 - Country', 
+     tickprefix = 'Rank_') %>%
+     layout(
+     geo = tworld
+     )
+tworld1
+```
+
+
+
