@@ -1,0 +1,42 @@
+---
+title: "Unit 4 Homework"
+author: "Hye Young Park"
+date: "8/4/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(hrbrthemes)
+library(readr)
+library(plotly)
+```
+
+```{r}
+top100tennis <- read_csv(file = 'top100tennis_messy-csv11.csv')
+top100tennis
+```
+
+
+# Lollipop Chart - Top 100 Tennis Players
+```{r}
+top100tennis1 <- ggplot(top100tennis, aes(x = tourn.played, y = rank, label = rank)) +
+        geom_point(size = 3, color = "red", alpha = 0.5, aes(text = paste(paste("Rank: ", top100tennis$rank), paste("Last Name: ", top100tennis$last_name),  paste("First Name: ", top100tennis$first_name), paste("Age: ", top100tennis$age), paste("Point: ", top100tennis$points), paste("Tournments played: ", top100tennis$tourn.played), sep = "<br />"))) +
+        geom_text(color = 'black', size = 2) +
+        geom_segment(aes(x = 0, y = rank, xend = top100tennis$tourn.played, yend = rank, color = "rank")) +
+        xlab("Tournaments played") +
+        ylab("Rank") +
+        ggtitle("Top 100 Tennis Players") +
+        theme_minimal(base_size = 12) +
+        theme(legend.position = "none", ) +
+        coord_flip()
+top100tennis1 <- ggplotly(top100tennis1, tooltip = "text")
+top100tennis1
+```
+
