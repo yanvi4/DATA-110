@@ -1,0 +1,77 @@
+---
+title: "Unit 5 - Homework"
+author: "Hye Young Park"
+date: "8/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Contagious disease data for US states
+```{r}
+library("dslabs")
+data(package="dslabs")
+list.files(system.file("script", package = "dslabs"))
+library(RColorBrewer)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(gapminder)
+library(gganimate)
+```
+
+### Original graph - Heatmap
+```{r}
+data("us_contagious_diseases")
+the_disease <- "Measles"
+us_contagious_diseases <- us_contagious_diseases %>% 
+  filter(!state %in% c("Hawaii","Alaska") & disease ==  the_disease) %>%
+  mutate(rate = count / population * 10000 * 52 / weeks_reporting) %>%
+  mutate(state = reorder(state, rate))
+
+us_contagious_diseases1 <- ggplot(us_contagious_diseases, aes(x = year, y = state, fill = rate)) +
+      geom_tile(color = "grey50") +
+      scale_x_continuous(expand=c(0,0)) +
+      scale_fill_gradientn(colors = brewer.pal(9, "Reds"), trans = "sqrt") +
+      geom_vline(xintercept=1963, col = "blue") +
+      theme_minimal() +  theme(panel.grid = element_blank()) +
+      ggtitle(the_disease, "US States") +
+      ylab("State") +
+      xlab("Year")
+us_contagious_diseases1
+```
+
+### Scatter plot animated
+#### There are three variables for this gragh: States, years, and rate. The third variable is same as in the original graph - Heatmap - and uses multiple colors to show it. The data set used in this code is the filtered and mutated data set from above. You can hit the play button to begin the animation, and it will show all of the information regarding rate for each state in a frame. I couldn't change values for the X-axis to show the appropriate numbers, so instead, they show the scientific notation. 
+```{r}
+us_contagious_diseases2 <- ggplot(us_contagious_diseases, 
+                                  aes(x = rate, y = state, frame = year, color = rate)) +
+                        geom_point(aes(colour = rate, 
+                         text = 
+                           paste(paste("Rate: ", us_contagious_diseases$rate),
+                           paste("Year: ", us_contagious_diseases$year),
+                           paste("State: ", us_contagious_diseases$state),
+                           paste("Count: ", us_contagious_diseases$count),
+                           paste("population: ", us_contagious_diseases$population),
+                           paste("Weeks reported: ", us_contagious_diseases$weeks_reporting),
+                           sep = "<br />")
+                           , alpha = 10)) +
+                        ggtitle("Measles: US States") +
+                        xlab("Rate") +
+                        ylab("State") +
+                        theme_minimal(base_size = 10) +
+                        theme(legend.position="Rate") +
+                        scale_x_log10() +
+                        scale_colour_gradientn(colours=rainbow(4))
+
+us_contagious_diseases2 <- ggplotly(us_contagious_diseases2,
+                                    height = 900, width = 700,
+                                    tooltip = "text") %>%
+                        animation_opts(frame = 200,
+                                    redraw = FALSE)
+us_contagious_diseases2
+```
+
+
